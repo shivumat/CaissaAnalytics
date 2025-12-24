@@ -52,8 +52,6 @@ class StockfishAnalyzer:
             # Get the mainline of the game
             board = game.board()
             move_number = 1
-            prev_eval = None
-            prev_fen = board.fen()
             
             for move in game.mainline_moves():
                 # Get evaluation before the move
@@ -88,15 +86,17 @@ class StockfishAnalyzer:
                     eval_after = 0
                 
                 # Detect mistakes based on evaluation drop
-                # From the perspective of the player who just moved
+                # Evaluations are from white's perspective
+                # After a move, we check if the position got worse for the player who moved
                 is_white_move = board.turn == chess.BLACK  # After move, turn changes
                 
                 if is_white_move:
-                    # White's move - check if evaluation dropped from white's perspective
+                    # White's move - drop is when eval decreases (from white's perspective)
                     eval_drop = current_eval - eval_after
                 else:
-                    # Black's move - check if evaluation dropped from black's perspective
-                    eval_drop = eval_after - current_eval
+                    # Black's move - drop is when eval increases (getting better for white = worse for black)
+                    # From black's perspective, we flip the signs
+                    eval_drop = (-current_eval) - (-eval_after)  # = eval_after - current_eval
                 
                 # If eval drop is significant, record as mistake
                 if eval_drop >= self.mistake_threshold:
@@ -110,8 +110,6 @@ class StockfishAnalyzer:
                     })
                 
                 move_number += 1
-                prev_eval = eval_after
-                prev_fen = board.fen()
             
             del stockfish
             
