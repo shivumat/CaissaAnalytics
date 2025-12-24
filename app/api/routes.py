@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
@@ -13,7 +13,7 @@ from app.api.schemas import (
 )
 from app.database import get_db, AsyncSessionLocal
 from app.services.analysis_service import AnalysisService
-from app.models.models import Game
+from app.models.models import Game, Mistake
 
 
 router = APIRouter(prefix="/api", tags=["analysis"])
@@ -123,7 +123,6 @@ async def get_game_status(
         raise HTTPException(status_code=404, detail="Game not found")
     
     # Count mistakes
-    from app.models.models import Mistake
     result = await db.execute(
         select(Mistake).where(Mistake.game_id == game_id)
     )

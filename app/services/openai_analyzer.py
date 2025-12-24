@@ -1,7 +1,10 @@
 import asyncio
+import logging
 from typing import List, Dict
 from openai import AsyncOpenAI
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIAnalyzer:
@@ -54,7 +57,7 @@ Provide a brief tactical/strategic explanation of why this move was a mistake. K
             return response.choices[0].message.content.strip()
             
         except Exception as e:
-            print(f"Error analyzing mistake with OpenAI: {e}")
+            logger.error(f"Error analyzing mistake with OpenAI: {e}")
             return f"Error: {str(e)}"
     
     async def analyze_mistakes_batch(self, mistakes: List[dict]) -> List[str]:

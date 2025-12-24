@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -6,6 +7,8 @@ from sqlalchemy.orm import selectinload
 from app.models.models import Game, Mistake, AnalysisStatus
 from app.services.stockfish_analyzer import StockfishAnalyzer
 from app.services.openai_analyzer import OpenAIAnalyzer
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisService:
@@ -99,7 +102,7 @@ class AnalysisService:
                 await db.commit()
                 
             except Exception as e:
-                print(f"Error analyzing game {game_id}: {e}")
+                logger.error(f"Error analyzing game {game_id}: {e}")
                 # Update status to failed
                 result = await db.execute(
                     select(Game).where(Game.id == game_id)

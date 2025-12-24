@@ -1,9 +1,12 @@
 import chess
 import chess.pgn
+import logging
 from io import StringIO
-from typing import List, Tuple, Optional
+from typing import List
 from stockfish import Stockfish
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class StockfishAnalyzer:
@@ -114,7 +117,7 @@ class StockfishAnalyzer:
             del stockfish
             
         except Exception as e:
-            print(f"Error analyzing game: {e}")
+            logger.error(f"Error analyzing game: {e}")
             return []
         
         return mistakes
