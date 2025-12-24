@@ -3,6 +3,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.main import app
 from app.database.db import Base, get_db
+from app.api.routes import set_session_factory
 
 
 # Test database URL
@@ -35,10 +36,14 @@ async def setup_database():
 async def client(setup_database):
     """Create test client"""
     app.dependency_overrides[get_db] = override_get_db
+    # Set session factory for background tasks
+    set_session_factory(TestSessionLocal)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
+    # Reset session factory
+    set_session_factory(None)
 
 
 @pytest.mark.asyncio
@@ -74,6 +79,8 @@ async def test_analyze_endpoint_validation(client):
 @pytest.mark.asyncio
 async def test_analyze_endpoint_success(client):
     """Test PGN analysis endpoint with valid data"""
+    import asyncio
+    
     test_pgn = """[Event "Test Game"]
 [Site "Test"]
 [Date "2024.01.01"]
@@ -90,6 +97,9 @@ async def test_analyze_endpoint_success(client):
     assert "job_id" in data
     assert data["games_count"] == 1
     assert len(data["game_ids"]) == 1
+    
+    # Wait a bit for background task to start (but we don't need it to complete for this test)
+    await asyncio.sleep(0.1)
 
 
 @pytest.mark.asyncio

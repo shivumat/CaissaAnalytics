@@ -2,6 +2,7 @@ import asyncio
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.models.models import Game, Mistake, AnalysisStatus
 from app.services.stockfish_analyzer import StockfishAnalyzer
 from app.services.openai_analyzer import OpenAIAnalyzer
@@ -120,17 +121,9 @@ class AnalysisService:
             Game object with mistakes
         """
         result = await db.execute(
-            select(Game).where(Game.id == game_id)
+            select(Game).options(selectinload(Game.mistakes)).where(Game.id == game_id)
         )
         game = result.scalar_one_or_none()
-        
-        if game:
-            # Load mistakes relationship
-            result = await db.execute(
-                select(Mistake).where(Mistake.game_id == game_id)
-            )
-            game.mistakes = result.scalars().all()
-        
         return game
     
     async def get_all_games(self, db: AsyncSession) -> List[Game]:
@@ -143,14 +136,8 @@ class AnalysisService:
         Returns:
             List of Game objects
         """
-        result = await db.execute(select(Game))
+        result = await db.execute(
+            select(Game).options(selectinload(Game.mistakes))
+        )
         games = result.scalars().all()
-        
-        # Load mistakes for each game
-        for game in games:
-            result = await db.execute(
-                select(Mistake).where(Mistake.game_id == game.id)
-            )
-            game.mistakes = result.scalars().all()
-        
         return games

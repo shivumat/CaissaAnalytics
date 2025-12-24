@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
@@ -20,9 +20,20 @@ router = APIRouter(prefix="/api", tags=["analysis"])
 analysis_service = AnalysisService()
 
 
+# Store background task session factory
+_session_factory = None
+
+
+def set_session_factory(factory):
+    """Set session factory for background tasks (useful for testing)"""
+    global _session_factory
+    _session_factory = factory
+
+
 async def background_analysis(game_ids: List[int]):
     """Background task for analyzing games"""
-    async with AsyncSessionLocal() as db:
+    factory = _session_factory if _session_factory else AsyncSessionLocal
+    async with factory() as db:
         await analysis_service.analyze_and_store(db, game_ids)
 
 
